@@ -1,0 +1,84 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AtendeBot | Atendimento Automático</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <main class="chat-container">
+
+        <header class="chat-header">
+            <div class="bot-icon">🤖</div>
+            <div>
+                <h1>AtendeBot</h1>
+                <p>Assistente virtual de atendimento</p>
+                <span class="status">● Online</span>
+            </div>
+        </header>
+
+        <section class="escolha" id="escolha">
+            <h2>Olá! Seja bem-vindo(a)! 👋</h2>
+            <p>Qual tipo de estabelecimento deseja consultar?</p>
+
+            <div class="botoes-tipo">
+                <button onclick="escolherEstabelecimento('loja')">
+                    🛍️ Loja
+                </button>
+
+                <button onclick="escolherEstabelecimento('salao')">
+                    💇 Salão de beleza
+                </button>
+            </div>
+        </section>
+
+        <section class="chat" id="chat" hidden>
+
+            <div class="mensagens" id="mensagens" aria-live="polite">
+            </div>
+
+            <div class="sugestoes">
+                <button onclick="perguntar('Qual o horário de funcionamento?')">
+                    Horários
+                </button>
+
+                <button onclick="perguntar('Quais são os preços?')">
+                    Preços
+                </button>
+
+                <button onclick="perguntar('Quais formas de pagamento aceitam?')">
+                    Pagamento
+                </button>
+            </div>
+
+            <form id="formulario">
+                <input
+                    type="text"
+                    id="mensagem"
+                    placeholder="Digite sua pergunta..."
+                    autocomplete="off"
+                    required
+                >
+
+                <button type="submit">Enviar ➤</button>
+            </form>
+
+            <button class="trocar" onclick="trocarEstabelecimento()">
+                Trocar estabelecimento
+            </button>
+
+        </section>
+
+        <footer>
+            <p>AtendeBot - Projeto demonstrativo da Feira Técnica</p>
+            <p>Atendimento automático com informações fictícias.</p>
+        </footer>
+
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
