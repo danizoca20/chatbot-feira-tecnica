@@ -14,6 +14,44 @@ const catalogoLoja = [
 const conhecimentos = {
     loja: [
         {
+            palavras: [
+                "preco",
+                "precos",
+                "preço",
+                "preços",
+                "valor",
+                "valores",
+                "quanto custa",
+                "quanto e"
+            ],
+            resposta: "Nossos produtos de informática custam aproximadamente de R$ 80,00 a R$ 300,00, dependendo do produto e do modelo. 😊 Se quiser consultar um item específico, diga o nome dele!"
+        },
+        {
+            palavras: [
+                "desconto",
+                "descontos",
+                "promocao",
+                "promocoes",
+                "promocional"
+            ],
+            resposta: "No momento, não temos descontos disponíveis. Quando houver novas promoções, avisaremos você! 😊"
+        },
+        {
+            palavras: [
+                "oque tem na loja",
+                "oque vendem",
+                "o que vende",
+                "o que voces vendem",
+                "o que vocês vendem",
+                "quais produtos",
+                "que produtos",
+                "o que tem na loja",
+                "produtos da loja",
+                "o que comercializa"
+            ],
+            resposta: "Vendemos aparelhos e itens de informática, como mouse, teclado, headset, memória RAM, SSD e webcam. 💻 Se quiser saber o preço de algum produto, é só perguntar!"
+        },
+        {
             palavras: ["horario", "funcionamento", "abre", "fecha"],
             resposta: "Nosso horário de funcionamento é de segunda a sábado, das 8h às 18h. 😊"
         },
@@ -126,7 +164,7 @@ function responder(pergunta) {
     const base = conhecimentos[estabelecimentoAtual];
 
     for (const item of base) {
-        const encontrou = item.palavras.some(function(palavra) {
+        const encontrou = item.palavras.some(function (palavra) {
             return texto.includes(normalizar(palavra));
         });
 
@@ -141,8 +179,8 @@ function responder(pergunta) {
 function responderPrecoProduto(pergunta) {
     const texto = normalizar(pergunta);
 
-    const produto = catalogoLoja.find(function(item) {
-        return item.palavras.some(function(palavra) {
+    const produto = catalogoLoja.find(function (item) {
+        return item.palavras.some(function (palavra) {
             return texto.includes(normalizar(palavra));
         });
     });
@@ -223,7 +261,7 @@ function perguntar(texto) {
     enviarPergunta(texto);
 }
 
-document.getElementById("formulario").addEventListener("submit", function(evento) {
+document.getElementById("formulario").addEventListener("submit", function (evento) {
     evento.preventDefault();
 
     const campo = document.getElementById("mensagem");
