@@ -1,6 +1,22 @@
-
 let estabelecimentoAtual = "";
 let aguardandoProduto = false;
+let agendamentoEmAndamento = null;
+
+const SERVICOS_SALAO = [
+    "Manicure",
+    "Corte de cabelo",
+    "Escova",
+    "Hidratação",
+    "Penteado"
+];
+
+const HORARIOS_AGENDAMENTO = [
+    "09:00", "10:00", "11:00",
+    "13:00", "14:00", "15:00",
+    "16:00", "17:00"
+];
+
+const CHAVE_AGENDAMENTOS = "atendebot_agendamentos";
 
 const catalogoLoja = [
     { nome: "Mouse Gamer", preco: 119.90, palavras: ["mouse", "mouse gamer"] },
@@ -14,41 +30,15 @@ const catalogoLoja = [
 const conhecimentos = {
     loja: [
         {
-            palavras: [
-                "preco",
-                "precos",
-                "preço",
-                "preços",
-                "valor",
-                "valores",
-                "quanto custa",
-                "quanto e"
-            ],
+            palavras: ["preco", "precos", "preço", "preços", "valor", "valores", "quanto custa", "quanto e"],
             resposta: "Nossos produtos de informática custam aproximadamente de R$ 80,00 a R$ 300,00, dependendo do produto e do modelo. 😊 Se quiser consultar um item específico, diga o nome dele!"
         },
         {
-            palavras: [
-                "desconto",
-                "descontos",
-                "promocao",
-                "promocoes",
-                "promocional"
-            ],
+            palavras: ["desconto", "descontos", "promocao", "promocoes", "promocional"],
             resposta: "No momento, não temos descontos disponíveis. Quando houver novas promoções, avisaremos você! 😊"
         },
         {
-            palavras: [
-                "oque tem na loja",
-                "oque vendem",
-                "o que vende",
-                "o que voces vendem",
-                "o que vocês vendem",
-                "quais produtos",
-                "que produtos",
-                "o que tem na loja",
-                "produtos da loja",
-                "o que comercializa"
-            ],
+            palavras: ["oque tem na loja", "oque vendem", "o que vende", "o que voces vendem", "o que vocês vendem", "quais produtos", "que produtos", "o que tem na loja", "produtos da loja", "o que comercializa"],
             resposta: "Vendemos aparelhos e itens de informática, como mouse, teclado, headset, memória RAM, SSD e webcam. 💻 Se quiser saber o preço de algum produto, é só perguntar!"
         },
         {
@@ -78,6 +68,10 @@ const conhecimentos = {
     ],
     salao: [
         {
+            palavras: ["servicos", "o que voces fazem", "o que vocês fazem", "o que oferece", "o que oferecem", "quais servicos", "quais serviços", "o que tem no salao", "o que tem no salão"],
+            resposta: "Nosso salão oferece diversos serviços de beleza! 💇‍♀️💅\n\n✨ Corte de cabelo\n✨ Escova\n✨ Hidratação\n✨ Penteados\n✨ Manicure\n\nNão realizamos serviços de pedicure.\n\nSe quiser saber o preço de algum serviço ou agendar um horário, é só perguntar!"
+        },
+        {
             palavras: ["horario", "funcionamento", "abre", "fecha"],
             resposta: "Nosso salão funciona de terça a sábado, das 9h às 19h. 💇"
         },
@@ -87,7 +81,7 @@ const conhecimentos = {
         },
         {
             palavras: ["agendamento", "agendar", "marcar", "horario disponivel"],
-            resposta: "Para agendar, informe o serviço desejado e o melhor dia para nossa equipe. 📅"
+            resposta: "Vamos fazer seu agendamento! 📅"
         },
         {
             palavras: ["pagamento", "pix", "cartao", "dinheiro", "pagar"],
@@ -107,7 +101,6 @@ const conhecimentos = {
         }
     ]
 };
-
 function normalizar(texto) {
     return texto
         .toLowerCase()
@@ -132,6 +125,7 @@ function adicionarMensagem(texto, tipo) {
 function escolherEstabelecimento(tipo) {
     estabelecimentoAtual = tipo;
     aguardandoProduto = false;
+    agendamentoEmAndamento = null;
 
     document.getElementById("escolha").hidden = true;
     document.getElementById("chat").hidden = false;
@@ -227,6 +221,243 @@ function responderPrecoProduto(pergunta) {
     mensagens.appendChild(caixa);
     mensagens.scrollTop = mensagens.scrollHeight;
 }
+function lerAgendamentos() {
+    try {
+        return JSON.parse(localStorage.getItem(CHAVE_AGENDAMENTOS) || "[]");
+    } catch (erro) {
+        return [];
+    }
+}
+
+function salvarAgendamentos(agendamentos) {
+    localStorage.setItem(CHAVE_AGENDAMENTOS, JSON.stringify(agendamentos));
+}
+
+function formatarData(dataISO) {
+    const [ano, mes, dia] = dataISO.split("-").map(Number);
+
+    return new Date(ano, mes - 1, dia).toLocaleDateString("pt-BR", {
+        weekday: "long",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+    });
+}
+
+function criarMensagemComOpcoes(texto, opcoes, aoEscolher) {
+    const mensagens = document.getElementById("mensagens");
+    const caixa = document.createElement("div");
+    caixa.className = "mensagem bot";
+
+    const textoEl = document.createElement("p");
+    textoEl.textContent = texto;
+    caixa.appendChild(textoEl);
+
+    const botoes = document.createElement("div");
+    botoes.style.display = "flex";
+    botoes.style.flexWrap = "wrap";
+    botoes.style.gap = "8px";
+    botoes.style.marginTop = "10px";
+
+    opcoes.forEach(function (opcao) {
+        const botao = document.createElement("button");
+        botao.type = "button";
+        botao.textContent = opcao.rotulo;
+        botao.style.cursor = "pointer";
+        botao.style.padding = "8px 12px";
+        botao.style.borderRadius = "10px";
+        botao.style.border = "1px solid #8b5cf6";
+        botao.style.background = "#ffffff";
+        botao.style.color = "#312e81";
+        botao.style.fontWeight = "600";
+
+        botao.addEventListener("click", function () {
+            adicionarMensagem(opcao.rotulo, "usuario");
+            aoEscolher(opcao.valor);
+        });
+
+        botoes.appendChild(botao);
+    });
+
+    caixa.appendChild(botoes);
+    mensagens.appendChild(caixa);
+    mensagens.scrollTop = mensagens.scrollHeight;
+}
+
+function iniciarAgendamento() {
+    agendamentoEmAndamento = { etapa: "servico" };
+
+    criarMensagemComOpcoes(
+        "Qual serviço você deseja agendar? 💇‍♀️💅",
+        SERVICOS_SALAO.map(function (servico) {
+            return { rotulo: servico, valor: servico };
+        }),
+        function (servico) {
+            agendamentoEmAndamento.servico = servico;
+            escolherDataAgendamento();
+        }
+    );
+}
+
+function gerarDatasDisponiveis() {
+    const datas = [];
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    // Próximos 14 dias; salão atende de terça a sábado.
+    for (let i = 0; i < 14 && datas.length < 7; i++) {
+        const data = new Date(hoje);
+        data.setDate(hoje.getDate() + i);
+
+        if (data.getDay() >= 2 && data.getDay() <= 6) {
+            const iso = [
+                data.getFullYear(),
+                String(data.getMonth() + 1).padStart(2, "0"),
+                String(data.getDate()).padStart(2, "0")
+            ].join("-");
+
+            datas.push({ iso: iso, rotulo: formatarData(iso) });
+        }
+    }
+
+    return datas;
+}
+
+function escolherDataAgendamento() {
+    agendamentoEmAndamento.etapa = "data";
+
+    const datas = gerarDatasDisponiveis();
+
+    criarMensagemComOpcoes(
+        "Escolha o dia desejado:",
+        datas.map(function (data) {
+            return { rotulo: data.rotulo, valor: data.iso };
+        }),
+        function (dataISO) {
+            agendamentoEmAndamento.data = dataISO;
+            escolherHorarioAgendamento();
+        }
+    );
+}
+
+function escolherHorarioAgendamento() {
+    agendamentoEmAndamento.etapa = "horario";
+
+    const agendamentos = lerAgendamentos();
+
+    const horariosLivres = HORARIOS_AGENDAMENTO.filter(function (horario) {
+        return !agendamentos.some(function (agendamento) {
+            return agendamento.data === agendamentoEmAndamento.data &&
+                agendamento.horario === horario;
+        });
+    });
+
+    if (horariosLivres.length === 0) {
+        adicionarMensagem(
+            "Não há horários disponíveis nesse dia. Vamos escolher outra data. 📅",
+            "bot"
+        );
+        escolherDataAgendamento();
+        return;
+    }
+
+    criarMensagemComOpcoes(
+        "Estes são os horários disponíveis para " +
+            formatarData(agendamentoEmAndamento.data) + ":",
+        horariosLivres.map(function (horario) {
+            return { rotulo: horario, valor: horario };
+        }),
+        function (horario) {
+            agendamentoEmAndamento.horario = horario;
+            confirmarAgendamento();
+        }
+    );
+}
+
+function confirmarAgendamento() {
+    agendamentoEmAndamento.etapa = "confirmacao";
+
+    criarMensagemComOpcoes(
+        "Confirme seu pedido:\n" +
+            "Serviço: " + agendamentoEmAndamento.servico + "\n" +
+            "Dia: " + formatarData(agendamentoEmAndamento.data) + "\n" +
+            "Horário: " + agendamentoEmAndamento.horario,
+        [
+            { rotulo: "Confirmar agendamento", valor: "confirmar" },
+            { rotulo: "Cancelar", valor: "cancelar" }
+        ],
+        function (acao) {
+            if (acao === "cancelar") {
+                agendamentoEmAndamento = null;
+                adicionarMensagem(
+                    "Tudo bem! O pedido de agendamento foi cancelado.",
+                    "bot"
+                );
+                return;
+            }
+
+            const agendamentos = lerAgendamentos();
+
+            const ocupado = agendamentos.some(function (agendamento) {
+                return agendamento.data === agendamentoEmAndamento.data &&
+                    agendamento.horario === agendamentoEmAndamento.horario;
+            });
+
+            if (ocupado) {
+                adicionarMensagem(
+                    "Esse horário acabou de ficar indisponível. Escolha outro, por favor.",
+                    "bot"
+                );
+                escolherHorarioAgendamento();
+                return;
+            }
+
+            agendamentos.push({
+                id: Date.now(),
+                servico: agendamentoEmAndamento.servico,
+                data: agendamentoEmAndamento.data,
+                horario: agendamentoEmAndamento.horario
+            });
+
+            salvarAgendamentos(agendamentos);
+
+            adicionarMensagem(
+                "Agendamento registrado nesta demonstração! ✅\n" +
+                agendamentoEmAndamento.servico + " — " +
+                formatarData(agendamentoEmAndamento.data) + " às " +
+                agendamentoEmAndamento.horario + ".",
+                "bot"
+            );
+
+            agendamentoEmAndamento = null;
+        }
+    );
+}
+
+function mostrarAgendamentos() {
+    const agendamentos = lerAgendamentos();
+
+    if (agendamentos.length === 0) {
+        adicionarMensagem(
+            "Ainda não há agendamentos registrados neste navegador.",
+            "bot"
+        );
+        return;
+    }
+
+    const texto = agendamentos
+        .slice()
+        .sort(function (a, b) {
+            return (a.data + a.horario).localeCompare(b.data + b.horario);
+        })
+        .map(function (agendamento, indice) {
+            return (indice + 1) + ". " + agendamento.servico + " — " +
+                formatarData(agendamento.data) + " às " + agendamento.horario;
+        })
+        .join("\n");
+
+    adicionarMensagem("Seus agendamentos registrados:\n" + texto, "bot");
+}
 
 function enviarPergunta(texto) {
     if (!texto.trim()) return;
@@ -234,6 +465,18 @@ function enviarPergunta(texto) {
     adicionarMensagem(texto, "usuario");
 
     const pergunta = normalizar(texto);
+
+    if (estabelecimentoAtual === "salao") {
+        if (/\b(meus agendamentos|ver agendamentos|consultar agendamentos|listar agendamentos)\b/.test(pergunta)) {
+            mostrarAgendamentos();
+            return;
+        }
+
+        if (/\b(agendar|agendamento|marcar horario|reservar horario)\b/.test(pergunta)) {
+            iniciarAgendamento();
+            return;
+        }
+    }
 
     if (estabelecimentoAtual === "loja" && aguardandoProduto) {
         responderPrecoProduto(texto);
@@ -277,6 +520,7 @@ document.getElementById("formulario").addEventListener("submit", function (event
 function trocarEstabelecimento() {
     estabelecimentoAtual = "";
     aguardandoProduto = false;
+    agendamentoEmAndamento = null;
 
     document.getElementById("chat").hidden = true;
     document.getElementById("escolha").hidden = false;
