@@ -1,3 +1,4 @@
+
 let pagamentoEmAndamento = null;
 let estabelecimentoAtual = "";
 let aguardandoProduto = false;
@@ -34,24 +35,16 @@ const catalogoLoja = [
 const conhecimentos = {
     loja: [
         {
-            palavras: ["preco", "precos", "valor", "valores", "quanto custa", "quanto e"],
-            resposta: "Nossos produtos de informática custam aproximadamente de R$ 80,00 a R$ 300,00, dependendo do produto e do modelo. 😊 Se quiser consultar um item específico, diga o nome dele!"
-        },
-        {
-            palavras: ["desconto", "descontos", "promocao", "promocoes", "promocional"],
+            palavras: ["desconto", "descontos", "promocao", "promocoes"],
             resposta: "No momento, não temos descontos disponíveis. Quando houver novas promoções, avisaremos você! 😊"
         },
         {
-            palavras: ["oque tem na loja", "oque vendem", "o que vende", "o que voces vendem", "quais produtos", "que produtos", "o que tem na loja", "produtos da loja", "o que comercializa"],
-            resposta: "Vendemos aparelhos e itens de informática, como mouse, teclado, headset, memória RAM, SSD e webcam. 💻 Se quiser saber o preço de algum produto, é só perguntar!"
+            palavras: ["oque tem na loja", "o que tem na loja", "oque vendem", "o que vende", "o que voces vendem", "quais produtos", "que produtos", "produtos da loja"],
+            resposta: "Vendemos produtos de informática, como mouse, teclado, headset, memória RAM, SSD e webcam. 💻"
         },
         {
             palavras: ["horario", "funcionamento", "abre", "fecha"],
-            resposta: "Nosso horário de funcionamento é de segunda a sábado, das 8h às 18h. 😊"
-        },
-        {
-            palavras: ["pagamento", "pix", "cartao", "dinheiro", "pagar"],
-            resposta: "Aceitamos Pix, dinheiro, cartão de débito e cartão de crédito. 💳"
+            resposta: "Nossa loja funciona de segunda a sábado, das 8h às 18h. 😊"
         },
         {
             palavras: ["entrega", "entregar", "frete", "receber"],
@@ -66,41 +59,36 @@ const conhecimentos = {
             resposta: "Nossa loja fictícia fica na Avenida Central, número 100. 📍"
         },
         {
-            palavras: ["contato", "telefone", "whatsapp", "falar"],
+            palavras: ["contato", "telefone", "whatsapp"],
             resposta: "Nosso atendimento está disponível pelo telefone fictício (31) 99999-0000."
         }
     ],
+
     salao: [
         {
-            palavras: ["servicos", "o que voces fazem", "o que oferece", "o que oferecem", "quais servicos", "o que tem no salao"],
-            resposta: "Nosso salão oferece diversos serviços de beleza! 💇‍♀️💅\n\n✨ Corte de cabelo\n✨ Escova\n✨ Hidratação\n✨ Penteados\n✨ Manicure\n\nNão realizamos serviços de pedicure.\n\nSe quiser saber o preço de algum serviço ou agendar um horário, é só perguntar!"
+            palavras: ["servicos", "o que voces fazem", "o que oferece", "quais servicos", "o que tem no salao"],
+            resposta: "Nosso salão oferece:\n\n✨ Corte de cabelo\n✨ Escova\n✨ Hidratação\n✨ Penteados\n✨ Manicure\n\nNão realizamos serviços de pedicure. 💅"
         },
         {
             palavras: ["horario", "funcionamento", "abre", "fecha"],
             resposta: "Nosso salão funciona de terça a sábado, das 9h às 19h. 💇"
         },
         {
-            palavras: ["preco", "precos", "valor", "servico", "servicos"],
-            resposta: "Confira alguns serviços: Corte: R$ 45,00; Escova: R$ 60,00; Manicure: R$ 35,00; Hidratação: R$ 80,00. ✨"
-        },
-        {
-            palavras: ["pagamento", "pix", "cartao", "dinheiro", "pagar"],
-            resposta: "Aceitamos Pix, dinheiro, cartão de débito e cartão de crédito. 💳"
+            palavras: ["preco", "precos", "valor", "valores", "quanto custa"],
+            resposta: "Confira nossos preços:\n\n✂️ Corte: R$ 45,00\n💇 Escova: R$ 60,00\n💅 Manicure: R$ 35,00\n✨ Hidratação: R$ 80,00\n\nPara penteados, consulte nossa equipe."
         },
         {
             palavras: ["endereco", "localizacao", "onde fica"],
             resposta: "Nosso salão fictício fica na Rua das Flores, número 250. 📍"
         },
         {
-            palavras: ["contato", "telefone", "whatsapp", "falar"],
-            resposta: "Nosso contato fictício é (31) 98888-0000. Nossa equipe poderá ajudar você!"
-        },
-        {
-            palavras: ["cancelar", "cancelamento", "desmarcar"],
-            resposta: "Para cancelar ou remarcar um horário, entre em contato com nossa equipe com antecedência."
+            palavras: ["contato", "telefone", "whatsapp"],
+            resposta: "Nosso contato fictício é (31) 98888-0000."
         }
     ]
 };
+
+// NORMALIZAÇÃO
 
 function normalizar(texto) {
     return texto
@@ -127,6 +115,7 @@ function escolherEstabelecimento(tipo) {
     estabelecimentoAtual = tipo;
     aguardandoProduto = false;
     agendamentoEmAndamento = null;
+    pagamentoEmAndamento = null;
 
     document.getElementById("escolha").hidden = true;
     document.getElementById("chat").hidden = false;
@@ -136,10 +125,12 @@ function escolherEstabelecimento(tipo) {
 
     adicionarMensagem(
         "Olá! Sou o AtendeBot da nossa " + nome +
-        ". 🤖 Como posso ajudar você hoje? Pode perguntar sobre horários, preços, pagamentos e outros assuntos!",
+        ". 🤖 Como posso ajudar você hoje? Pergunte sobre horários, preços, pagamentos e outros assuntos!",
         "bot"
     );
 }
+
+// RESPOSTAS AUTOMÁTICAS
 
 function responder(pergunta) {
     const texto = normalizar(pergunta);
@@ -166,8 +157,10 @@ function responder(pergunta) {
         if (encontrou) return item.resposta;
     }
 
-    return "No momento, não temos essa informação disponível em nosso atendimento. Sua dúvida já foi encaminhada para nossa equipe. Por favor, aguarde, pois em breve entraremos em contato para ajudar você! 💬\n\nEnquanto isso, você também pode perguntar sobre outras coisas.";
+    return "No momento, não temos essa informação disponível em nosso atendimento. Sua dúvida já foi encaminhada para nossa equipe. Por favor, aguarde, pois em breve entraremos em contato para ajudar você! 💬";
 }
+
+// PRODUTOS
 
 function responderPrecoProduto(pergunta) {
     const texto = normalizar(pergunta);
@@ -180,9 +173,10 @@ function responderPrecoProduto(pergunta) {
 
     if (!produto) {
         adicionarMensagem(
-            "Não encontrei esse produto no nosso catálogo. 😊 Temos mouse, teclado, headset, memória RAM, SSD e webcam. Qual deles você procura?",
+            "Não encontramos esse produto no catálogo. Temos mouse, teclado, headset, memória RAM, SSD e webcam. Qual deles você procura?",
             "bot"
         );
+        aguardandoProduto = true;
         return;
     }
 
@@ -207,10 +201,6 @@ function responderPrecoProduto(pergunta) {
     link.href = "https://lista.mercadolivre.com.br/" + encodeURIComponent(produto.nome);
     link.target = "_blank";
     link.rel = "noopener noreferrer";
-    link.style.display = "block";
-    link.style.marginTop = "10px";
-    link.style.color = "#312e81";
-    link.style.fontWeight = "bold";
 
     caixa.appendChild(nome);
     caixa.appendChild(preco);
@@ -220,6 +210,8 @@ function responderPrecoProduto(pergunta) {
     mensagens.appendChild(caixa);
     mensagens.scrollTop = mensagens.scrollHeight;
 }
+
+// AGENDAMENTOS
 
 function lerAgendamentos() {
     try {
@@ -244,9 +236,20 @@ function formatarData(dataISO) {
     });
 }
 
+function dataISO(data) {
+    return [
+        data.getFullYear(),
+        String(data.getMonth() + 1).padStart(2, "0"),
+        String(data.getDate()).padStart(2, "0")
+    ].join("-");
+}
+
+// BOTÕES DE OPÇÕES
+
 function criarMensagemComOpcoes(texto, opcoes, aoEscolher) {
     const mensagens = document.getElementById("mensagens");
     const caixa = document.createElement("div");
+
     caixa.className = "mensagem bot";
 
     const textoEl = document.createElement("p");
@@ -254,17 +257,17 @@ function criarMensagemComOpcoes(texto, opcoes, aoEscolher) {
     caixa.appendChild(textoEl);
 
     const botoes = document.createElement("div");
+
     botoes.style.display = "flex";
     botoes.style.flexWrap = "wrap";
     botoes.style.gap = "8px";
     botoes.style.marginTop = "10px";
-    if (estabelecimentoAtual === "salao" && agendamentoEmAndamento) {
+
+    if (agendamentoEmAndamento) {
         const botaoCancelar = document.createElement("button");
+
         botaoCancelar.type = "button";
         botaoCancelar.textContent = "❌ Cancelar agendamento";
-        botaoCancelar.style.padding = "8px 12px";
-        botaoCancelar.style.borderRadius = "10px";
-        botaoCancelar.style.cursor = "pointer";
 
         botaoCancelar.addEventListener("click", function () {
             adicionarMensagem("Cancelar agendamento", "usuario");
@@ -274,11 +277,12 @@ function criarMensagemComOpcoes(texto, opcoes, aoEscolher) {
         botoes.appendChild(botaoCancelar);
     }
 
-    botoes.appendChild(botaoCancelar);
     opcoes.forEach(function (opcao) {
         const botao = document.createElement("button");
+
         botao.type = "button";
         botao.textContent = opcao.rotulo;
+
         botao.style.cursor = "pointer";
         botao.style.padding = "8px 12px";
         botao.style.borderRadius = "10px";
@@ -299,7 +303,13 @@ function criarMensagemComOpcoes(texto, opcoes, aoEscolher) {
     mensagens.appendChild(caixa);
     mensagens.scrollTop = mensagens.scrollHeight;
 }
+
 function cancelarAgendamento() {
+    if (!agendamentoEmAndamento) {
+        adicionarMensagem("Não existe agendamento em andamento para cancelar.", "bot");
+        return;
+    }
+
     agendamentoEmAndamento = null;
 
     adicionarMensagem(
@@ -307,6 +317,7 @@ function cancelarAgendamento() {
         "bot"
     );
 }
+
 function iniciarAgendamento() {
     agendamentoEmAndamento = { etapa: "servico" };
 
@@ -325,20 +336,20 @@ function iniciarAgendamento() {
 function gerarDatasDisponiveis() {
     const datas = [];
     const hoje = new Date();
+
     hoje.setHours(0, 0, 0, 0);
 
-    for (let i = 0; i < 14 && datas.length < 7; i++) {
+    for (let i = 0; i < 30 && datas.length < 10; i++) {
         const data = new Date(hoje);
         data.setDate(hoje.getDate() + i);
 
         if (data.getDay() >= 2 && data.getDay() <= 6) {
-            const iso = [
-                data.getFullYear(),
-                String(data.getMonth() + 1).padStart(2, "0"),
-                String(data.getDate()).padStart(2, "0")
-            ].join("-");
+            const iso = dataISO(data);
 
-            datas.push({ iso: iso, rotulo: formatarData(iso) });
+            datas.push({
+                iso: iso,
+                rotulo: formatarData(iso)
+            });
         }
     }
 
@@ -355,8 +366,8 @@ function escolherDataAgendamento() {
         datas.map(function (data) {
             return { rotulo: data.rotulo, valor: data.iso };
         }),
-        function (dataISO) {
-            agendamentoEmAndamento.data = dataISO;
+        function (dataISOEscolhida) {
+            agendamentoEmAndamento.data = dataISOEscolhida;
             escolherHorarioAgendamento();
         }
     );
@@ -375,7 +386,11 @@ function escolherHorarioAgendamento() {
     });
 
     if (horariosLivres.length === 0) {
-        adicionarMensagem("Não há horários disponíveis nesse dia. Vamos escolher outra data. 📅", "bot");
+        adicionarMensagem(
+            "Não há horários disponíveis nesse dia. Vamos escolher outra data. 📅",
+            "bot"
+        );
+
         escolherDataAgendamento();
         return;
     }
@@ -401,10 +416,12 @@ function confirmarAgendamento() {
         "Serviço: " + agendamentoEmAndamento.servico + "\n" +
         "Dia: " + formatarData(agendamentoEmAndamento.data) + "\n" +
         "Horário: " + agendamentoEmAndamento.horario,
+
         [
             { rotulo: "Confirmar agendamento", valor: "confirmar" },
             { rotulo: "Cancelar", valor: "cancelar" }
         ],
+
         function (acao) {
             if (acao === "cancelar") {
                 agendamentoEmAndamento = null;
@@ -420,7 +437,7 @@ function confirmarAgendamento() {
             });
 
             if (ocupado) {
-                adicionarMensagem("Esse horário acabou de ficar indisponível. Escolha outro, por favor.", "bot");
+                adicionarMensagem("Esse horário acabou de ficar indisponível. Escolha outro.", "bot");
                 escolherHorarioAgendamento();
                 return;
             }
@@ -455,22 +472,52 @@ function mostrarAgendamentos() {
         return;
     }
 
-    const texto = agendamentos
-        .slice()
-        .sort(function (a, b) {
-            return (a.data + a.horario).localeCompare(b.data + b.horario);
-        })
-        .map(function (agendamento, indice) {
-            return (indice + 1) + ". " + agendamento.servico + " — " +
-                formatarData(agendamento.data) + " às " + agendamento.horario;
-        })
-        .join("\n");
+    const mensagens = document.getElementById("mensagens");
+    const caixa = document.createElement("div");
 
-    adicionarMensagem("Seus agendamentos registrados:\n" + texto, "bot");
+    caixa.className = "mensagem bot";
+
+    const titulo = document.createElement("p");
+    titulo.textContent = "📅 Seus agendamentos registrados:";
+    caixa.appendChild(titulo);
+
+    agendamentos.forEach(function (agendamento) {
+        const item = document.createElement("p");
+
+        item.textContent =
+            agendamento.servico + " — " +
+            formatarData(agendamento.data) + " às " +
+            agendamento.horario;
+
+        caixa.appendChild(item);
+
+        const botao = document.createElement("button");
+
+        botao.type = "button";
+        botao.textContent = "Cancelar este horário";
+
+        botao.addEventListener("click", function () {
+            const atualizados = lerAgendamentos().filter(function (item) {
+                return item.id !== agendamento.id;
+            });
+
+            salvarAgendamentos(atualizados);
+
+            adicionarMensagem("Agendamento cancelado com sucesso! ❌", "bot");
+            mostrarAgendamentos();
+        });
+
+        caixa.appendChild(botao);
+    });
+
+    mensagens.appendChild(caixa);
+    mensagens.scrollTop = mensagens.scrollHeight;
 }
 
+// CONSULTA DE DISPONIBILIDADE
+
 function consultarDisponibilidade(textoOriginal) {
-    const texto = textoOriginal.toLowerCase();
+    const texto = normalizar(textoOriginal);
 
     const dataEncontrada = texto.match(
         /(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/
@@ -481,6 +528,7 @@ function consultarDisponibilidade(textoOriginal) {
     const dia = Number(dataEncontrada[1]);
     const mes = Number(dataEncontrada[2]);
     const ano = Number(dataEncontrada[3]);
+
     const data = new Date(ano, mes - 1, dia);
 
     if (
@@ -497,12 +545,12 @@ function consultarDisponibilidade(textoOriginal) {
     );
 
     const horarioEncontrado = textoDepoisDaData.match(
-        /(?:às?|as)?\s*(\d{1,2})(?::(\d{2}))?\s*(?:h(?:oras?)?|hrs?)?/i
+        /(?:as)?\s*(\d{1,2})(?::(\d{2}))?\s*(?:h(?:oras?)?|hrs?)?/i
     );
 
     if (!horarioEncontrado) {
         adicionarMensagem(
-            `Para ${formatarData(dataISO(data))}, informe também o horário. Exemplo: "Tem horário para ${dia}/${String(mes).padStart(2, "0")}/${ano} às 11h?"`,
+            "Informe também o horário desejado. Exemplo: Tem horário para 10/11/2026 às 11h?",
             "bot"
         );
         return true;
@@ -510,13 +558,15 @@ function consultarDisponibilidade(textoOriginal) {
 
     const hora = Number(horarioEncontrado[1]);
     const minutos = Number(horarioEncontrado[2] || 0);
-    const horario = `${String(hora).padStart(2, "0")}:${String(minutos).padStart(2, "0")}`;
+
+    const horario =
+        String(hora).padStart(2, "0") + ":" +
+        String(minutos).padStart(2, "0");
 
     const dataAgendamento = dataISO(data);
-    const agendamentos = lerAgendamentos();
 
     if (data < new Date(new Date().setHours(0, 0, 0, 0))) {
-        adicionarMensagem("Essa data já passou. Escolha uma data futura, por favor.", "bot");
+        adicionarMensagem("Essa data já passou. Escolha uma data futura.", "bot");
         return true;
     }
 
@@ -527,11 +577,13 @@ function consultarDisponibilidade(textoOriginal) {
 
     if (!HORARIOS_AGENDAMENTO.includes(horario)) {
         adicionarMensagem(
-            "Esse horário não faz parte dos nossos horários de atendimento. Temos opções das 9h às 17h, com pausa às 12h.",
+            "Esse horário não está disponível. Temos opções das 9h às 11h e das 13h às 17h.",
             "bot"
         );
         return true;
     }
+
+    const agendamentos = lerAgendamentos();
 
     const ocupado = agendamentos.some(function (agendamento) {
         return agendamento.data === dataAgendamento &&
@@ -539,22 +591,15 @@ function consultarDisponibilidade(textoOriginal) {
     });
 
     if (ocupado) {
-        const livres = HORARIOS_AGENDAMENTO.filter(function (h) {
-            return !agendamentos.some(function (agendamento) {
-                return agendamento.data === dataAgendamento &&
-                    agendamento.horario === h;
-            });
-        });
-
         adicionarMensagem(
-            livres.length
-                ? `Às ${horario}, esse horário já está ocupado. Para ${formatarData(dataAgendamento)}, ainda temos: ${livres.join(", ")}. Digite "agendar" para reservar.`
-                : `Não temos mais horários disponíveis para ${formatarData(dataAgendamento)}. Digite "agendar" para escolher outra data.`,
+            "Esse horário já está ocupado. Digite AGENDAR para escolher outro horário.",
             "bot"
         );
     } else {
         adicionarMensagem(
-            `Sim! Temos disponibilidade em ${formatarData(dataAgendamento)} às ${horario}. Digite "agendar" para fazer sua reserva.`,
+            "Sim! Temos disponibilidade em " +
+            formatarData(dataAgendamento) + " às " + horario +
+            ". Digite AGENDAR para reservar.",
             "bot"
         );
     }
@@ -562,13 +607,8 @@ function consultarDisponibilidade(textoOriginal) {
     return true;
 }
 
-function dataISO(data) {
-    return [
-        data.getFullYear(),
-        String(data.getMonth() + 1).padStart(2, "0"),
-        String(data.getDate()).padStart(2, "0")
-    ].join("-");
-}
+// PAGAMENTOS
+
 function iniciarPagamento(metodo) {
     if (metodo === "pix") {
         pagamentoEmAndamento = "pix";
@@ -576,27 +616,10 @@ function iniciarPagamento(metodo) {
         const chavePix = "00000000-0000-4000-8000-000000000000";
 
         adicionarMensagem(
-            "💠 Pagamento via Pix\n\n" +
-            "Para concluir seu pagamento demonstrativo, utilize a chave Pix abaixo:\n\n" +
-            "Chave Pix: " + chavePix + "\n\n" +
-            "Depois de simular o envio do pagamento, digite: comprovante enviado\n\n" +
-            "⚠️ Esta é uma simulação. Nenhum pagamento real será realizado.",
-            "bot"
-        );
-
-        return;
-    }
-
-    if (metodo === "cartao") {
-        pagamentoEmAndamento = null;
-
-        if (compraEmAndamento) {
-            concluirCompraLoja();
-            return;
-        }
-
-        adicionarMensagem(
-            "💳 O pagamento com cartão será realizado no dia do atendimento. Aguardamos você no horário agendado!",
+            "💠 Pagamento via Pix (simulação)\n\n" +
+            "Chave Pix fictícia: " + chavePix +
+            "\n\nNenhuma transferência real deve ser realizada. " +
+            "Digite COMPROVANTE ENVIADO para simular a confirmação ou CANCELAR para desistir.",
             "bot"
         );
 
@@ -605,10 +628,26 @@ function iniciarPagamento(metodo) {
 
     pagamentoEmAndamento = null;
 
-    adicionarMensagem(
-        "💵 O pagamento em dinheiro poderá ser entregue no dia do atendimento. Agradecemos pelo contato!",
-        "bot"
-    );
+    if (estabelecimentoAtual === "loja" && compraEmAndamento) {
+        concluirCompraLoja();
+        return;
+    }
+
+    if (estabelecimentoAtual === "salao") {
+        adicionarMensagem(
+            metodo === "cartao"
+                ? "💳 O pagamento com cartão será realizado no dia do atendimento!"
+                : "💵 O pagamento em dinheiro poderá ser realizado no dia do atendimento!",
+            "bot"
+        );
+    } else {
+        adicionarMensagem(
+            "Pagamento selecionado na demonstração. Nenhuma cobrança real será realizada.",
+            "bot"
+        );
+
+        concluirCompraLoja();
+    }
 }
 
 function mostrarFormasPagamento() {
@@ -624,6 +663,9 @@ function mostrarFormasPagamento() {
         }
     );
 }
+
+// CARRINHO
+
 function adicionarAoCarrinho(texto) {
     const pergunta = normalizar(texto);
 
@@ -635,7 +677,7 @@ function adicionarAoCarrinho(texto) {
 
     if (produtosEncontrados.length === 0) {
         adicionarMensagem(
-            "Não encontrei esse produto. Temos mouse, teclado, headset, memória RAM, SSD e webcam.",
+            "Não encontramos esse produto. Temos mouse, teclado, headset, memória RAM, SSD e webcam.",
             "bot"
         );
         return;
@@ -657,7 +699,7 @@ function adicionarAoCarrinho(texto) {
         }
     });
 
-    adicionarMensagem("Produto(s) adicionado(s) ao carrinho! 🛒", "bot");
+    adicionarMensagem("Produto adicionado ao carrinho! 🛒", "bot");
     mostrarCarrinho();
 }
 
@@ -711,12 +753,16 @@ function mostrarCarrinho() {
 
             if (acao === "cancelar") {
                 carrinho = [];
+                compraEmAndamento = false;
+                pagamentoEmAndamento = null;
+
                 adicionarMensagem("Compra cancelada. Seu carrinho foi esvaziado. ❌", "bot");
                 return;
             }
 
             if (acao.startsWith("remover:")) {
                 const nome = acao.replace("remover:", "");
+
                 carrinho = carrinho.filter(function (item) {
                     return item.nome !== nome;
                 });
@@ -750,7 +796,8 @@ function finalizarCompra() {
     compraEmAndamento = true;
 
     adicionarMensagem(
-        "Sua compra: " + resumoCompra + "\n\nEscolha uma forma de pagamento:",
+        "Sua compra: " + resumoCompra +
+        "\n\nEscolha uma forma de pagamento:",
         "bot"
     );
 
@@ -768,29 +815,28 @@ function concluirCompraLoja() {
     carrinho = [];
     compraEmAndamento = false;
     resumoCompra = "";
+    pagamentoEmAndamento = null;
 }
+
+// ENVIO DE PERGUNTAS
+
 function enviarPergunta(texto) {
     adicionarMensagem(texto, "usuario");
 
     const pergunta = normalizar(texto);
-    // Simulação de envio e aprovação do comprovante Pix
-    if (pagamentoEmAndamento === "pix") {
 
-        if (
-            pergunta.includes("cancelar") ||
-            pergunta.includes("desistir")
-        ) {
+    // CANCELAMENTO DO PIX
+
+    if (pagamentoEmAndamento === "pix") {
+        if (pergunta.includes("cancelar") || pergunta.includes("desistir")) {
             pagamentoEmAndamento = null;
 
             adicionarMensagem(
-                "❌ Pagamento Pix cancelado! Se desejar, você poderá escolher outra forma de pagamento.",
+                "❌ Pagamento Pix cancelado! Sua compra não foi concluída.",
                 "bot"
             );
 
             mostrarFormasPagamento();
-            if (compraEmAndamento) {
-                concluirCompraLoja();
-            }
             return;
         }
 
@@ -802,38 +848,43 @@ function enviarPergunta(texto) {
             pagamentoEmAndamento = null;
 
             adicionarMensagem(
-                "✅ Comprovante recebido! Pagamento aprovado na nossa demonstração. Obrigado!",
+                "✅ Confirmação simulada recebida! Obrigado por participar da demonstração.",
                 "bot"
             );
+
+            if (estabelecimentoAtual === "loja" && compraEmAndamento) {
+                concluirCompraLoja();
+            }
 
             return;
         }
 
         adicionarMensagem(
-            "Aguardamos o comprovante para continuar. Se mudou de ideia, digite CANCELAR.",
+            "Aguardamos a confirmação simulada. Digite COMPROVANTE ENVIADO ou CANCELAR.",
             "bot"
         );
 
         return;
     }
 
-    // Mostrar opções quando o cliente perguntar sobre pagamento
+    // PAGAMENTO
+
     if (
-        pergunta.includes("pagamento") ||
         pergunta.includes("formas de pagar") ||
-        pergunta.includes("como pagar")
+        pergunta.includes("como pagar") ||
+        pergunta.includes("formas de pagamento") ||
+        pergunta.includes("qual pagamento")
     ) {
         mostrarFormasPagamento();
         return;
     }
 
-    // Se o cliente escolher Pix ou cartão diretamente
     if (pergunta === "pix") {
         iniciarPagamento("pix");
         return;
     }
 
-    if (pergunta.includes("cartao")) {
+    if (pergunta === "cartao") {
         iniciarPagamento("cartao");
         return;
     }
@@ -842,6 +893,8 @@ function enviarPergunta(texto) {
         iniciarPagamento("dinheiro");
         return;
     }
+
+    // SALÃO
 
     if (estabelecimentoAtual === "salao") {
         if (
@@ -853,12 +906,24 @@ function enviarPergunta(texto) {
             return;
         }
 
+        if (
+            pergunta.includes("cancelar agendamento") ||
+            pergunta.includes("cancelar horario") ||
+            pergunta.includes("desmarcar")
+        ) {
+            if (agendamentoEmAndamento) {
+                cancelarAgendamento();
+            } else {
+                mostrarAgendamentos();
+            }
+            return;
+        }
+
         if (consultarDisponibilidade(texto)) return;
 
         if (
             pergunta.includes("agendar") ||
             pergunta.includes("marcar horario") ||
-            pergunta.includes("marcar um horario") ||
             pergunta.includes("quero marcar")
         ) {
             iniciarAgendamento();
@@ -866,9 +931,19 @@ function enviarPergunta(texto) {
         }
     }
 
-    if (estabelecimentoAtual === "loja" && /\b(preco|precos|valor|quanto custa)\b/.test(pergunta)) {
+    // CONSULTA DE PREÇO DA LOJA
+
+    if (
+        estabelecimentoAtual === "loja" &&
+        /\b(preco|precos|valor|valores|quanto custa)\b/.test(pergunta)
+    ) {
         aguardandoProduto = true;
-        adicionarMensagem("Qual produto você deseja consultar? Temos mouse, teclado, headset, memória RAM, SSD e webcam.", "bot");
+
+        adicionarMensagem(
+            "Qual produto você deseja consultar? Temos mouse, teclado, headset, memória RAM, SSD e webcam.",
+            "bot"
+        );
+
         return;
     }
 
@@ -877,6 +952,9 @@ function enviarPergunta(texto) {
         responderPrecoProduto(texto);
         return;
     }
+
+    // LOJA
+
     if (estabelecimentoAtual === "loja") {
         if (
             pergunta.includes("ver carrinho") ||
@@ -894,6 +972,8 @@ function enviarPergunta(texto) {
             carrinho = [];
             compraEmAndamento = false;
             pagamentoEmAndamento = null;
+            resumoCompra = "";
+
             adicionarMensagem("Compra cancelada! Seu carrinho foi esvaziado. ❌", "bot");
             return;
         }
@@ -907,8 +987,11 @@ function enviarPergunta(texto) {
             return;
         }
     }
+
     adicionarMensagem(responder(texto), "bot");
 }
+
+// FORMULÁRIO
 
 document.getElementById("formulario").addEventListener("submit", function (evento) {
     evento.preventDefault();
@@ -919,36 +1002,29 @@ document.getElementById("formulario").addEventListener("submit", function (event
     if (!texto) return;
 
     enviarPergunta(texto);
+
     campo.value = "";
     campo.focus();
 });
+
+// TROCAR ESTABELECIMENTO
 
 function trocarEstabelecimento() {
     estabelecimentoAtual = "";
     aguardandoProduto = false;
     agendamentoEmAndamento = null;
+    pagamentoEmAndamento = null;
 
     document.getElementById("chat").hidden = true;
     document.getElementById("escolha").hidden = false;
 }
+
+// BOTÕES DE PERGUNTAS RÁPIDAS
+
 function perguntar(texto) {
     const campoMensagem = document.getElementById("mensagem");
+
     campoMensagem.value = texto;
 
     document.getElementById("formulario").requestSubmit();
-}
-function mostrarPagamentoPix() {
-    const chavePix = "00000000-0000-4000-8000-000000000000";
-
-    criarMensagemBot(`
-        <strong>💠 Pagamento via Pix</strong><br><br>
-        Para simular seu pagamento, utilize a chave Pix abaixo:<br><br>
-        <strong>Chave Pix:</strong><br>
-        <code>${chavePix}</code><br><br>
-        Após copiar a chave, imagine que realizou o pagamento e aguarde a confirmação.<br><br>
-        <em>⚠️ Esta é uma simulação. Nenhum pagamento real será realizado.</em><br><br>
-        <button type="button" onclick="copiarPix('${chavePix}')">
-            📋 Copiar chave Pix
-        </button>
-    `);
 }
