@@ -1,6 +1,10 @@
+let pagamentoEmAndamento = null;
 let estabelecimentoAtual = "";
 let aguardandoProduto = false;
 let agendamentoEmAndamento = null;
+let carrinho = [];
+let compraEmAndamento = false;
+let resumoCompra = "";
 
 const SERVICOS_SALAO = [
     "Manicure",
@@ -30,7 +34,7 @@ const catalogoLoja = [
 const conhecimentos = {
     loja: [
         {
-            palavras: ["preco", "precos", "preço", "preços", "valor", "valores", "quanto custa", "quanto e"],
+            palavras: ["preco", "precos", "valor", "valores", "quanto custa", "quanto e"],
             resposta: "Nossos produtos de informática custam aproximadamente de R$ 80,00 a R$ 300,00, dependendo do produto e do modelo. 😊 Se quiser consultar um item específico, diga o nome dele!"
         },
         {
@@ -38,7 +42,7 @@ const conhecimentos = {
             resposta: "No momento, não temos descontos disponíveis. Quando houver novas promoções, avisaremos você! 😊"
         },
         {
-            palavras: ["oque tem na loja", "oque vendem", "o que vende", "o que voces vendem", "o que vocês vendem", "quais produtos", "que produtos", "o que tem na loja", "produtos da loja", "o que comercializa"],
+            palavras: ["oque tem na loja", "oque vendem", "o que vende", "o que voces vendem", "quais produtos", "que produtos", "o que tem na loja", "produtos da loja", "o que comercializa"],
             resposta: "Vendemos aparelhos e itens de informática, como mouse, teclado, headset, memória RAM, SSD e webcam. 💻 Se quiser saber o preço de algum produto, é só perguntar!"
         },
         {
@@ -68,7 +72,7 @@ const conhecimentos = {
     ],
     salao: [
         {
-            palavras: ["servicos", "o que voces fazem", "o que vocês fazem", "o que oferece", "o que oferecem", "quais servicos", "quais serviços", "o que tem no salao", "o que tem no salão"],
+            palavras: ["servicos", "o que voces fazem", "o que oferece", "o que oferecem", "quais servicos", "o que tem no salao"],
             resposta: "Nosso salão oferece diversos serviços de beleza! 💇‍♀️💅\n\n✨ Corte de cabelo\n✨ Escova\n✨ Hidratação\n✨ Penteados\n✨ Manicure\n\nNão realizamos serviços de pedicure.\n\nSe quiser saber o preço de algum serviço ou agendar um horário, é só perguntar!"
         },
         {
@@ -78,10 +82,6 @@ const conhecimentos = {
         {
             palavras: ["preco", "precos", "valor", "servico", "servicos"],
             resposta: "Confira alguns serviços: Corte: R$ 45,00; Escova: R$ 60,00; Manicure: R$ 35,00; Hidratação: R$ 80,00. ✨"
-        },
-        {
-            palavras: ["agendamento", "agendar", "marcar", "horario disponivel"],
-            resposta: "Vamos fazer seu agendamento! 📅"
         },
         {
             palavras: ["pagamento", "pix", "cartao", "dinheiro", "pagar"],
@@ -101,6 +101,7 @@ const conhecimentos = {
         }
     ]
 };
+
 function normalizar(texto) {
     return texto
         .toLowerCase()
@@ -162,9 +163,7 @@ function responder(pergunta) {
             return texto.includes(normalizar(palavra));
         });
 
-        if (encontrou) {
-            return item.resposta;
-        }
+        if (encontrou) return item.resposta;
     }
 
     return "No momento, não temos essa informação disponível em nosso atendimento. Sua dúvida já foi encaminhada para nossa equipe. Por favor, aguarde, pois em breve entraremos em contato para ajudar você! 💬\n\nEnquanto isso, você também pode perguntar sobre outras coisas.";
@@ -221,6 +220,7 @@ function responderPrecoProduto(pergunta) {
     mensagens.appendChild(caixa);
     mensagens.scrollTop = mensagens.scrollHeight;
 }
+
 function lerAgendamentos() {
     try {
         return JSON.parse(localStorage.getItem(CHAVE_AGENDAMENTOS) || "[]");
@@ -258,7 +258,23 @@ function criarMensagemComOpcoes(texto, opcoes, aoEscolher) {
     botoes.style.flexWrap = "wrap";
     botoes.style.gap = "8px";
     botoes.style.marginTop = "10px";
+    if (estabelecimentoAtual === "salao" && agendamentoEmAndamento) {
+        const botaoCancelar = document.createElement("button");
+        botaoCancelar.type = "button";
+        botaoCancelar.textContent = "❌ Cancelar agendamento";
+        botaoCancelar.style.padding = "8px 12px";
+        botaoCancelar.style.borderRadius = "10px";
+        botaoCancelar.style.cursor = "pointer";
 
+        botaoCancelar.addEventListener("click", function () {
+            adicionarMensagem("Cancelar agendamento", "usuario");
+            cancelarAgendamento();
+        });
+
+        botoes.appendChild(botaoCancelar);
+    }
+
+    botoes.appendChild(botaoCancelar);
     opcoes.forEach(function (opcao) {
         const botao = document.createElement("button");
         botao.type = "button";
@@ -283,7 +299,14 @@ function criarMensagemComOpcoes(texto, opcoes, aoEscolher) {
     mensagens.appendChild(caixa);
     mensagens.scrollTop = mensagens.scrollHeight;
 }
+function cancelarAgendamento() {
+    agendamentoEmAndamento = null;
 
+    adicionarMensagem(
+        "❌ Agendamento cancelado! Quando quiser, estaremos à disposição para marcar outro horário. 😊",
+        "bot"
+    );
+}
 function iniciarAgendamento() {
     agendamentoEmAndamento = { etapa: "servico" };
 
@@ -304,7 +327,6 @@ function gerarDatasDisponiveis() {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
 
-    // Próximos 14 dias; salão atende de terça a sábado.
     for (let i = 0; i < 14 && datas.length < 7; i++) {
         const data = new Date(hoje);
         data.setDate(hoje.getDate() + i);
@@ -353,17 +375,14 @@ function escolherHorarioAgendamento() {
     });
 
     if (horariosLivres.length === 0) {
-        adicionarMensagem(
-            "Não há horários disponíveis nesse dia. Vamos escolher outra data. 📅",
-            "bot"
-        );
+        adicionarMensagem("Não há horários disponíveis nesse dia. Vamos escolher outra data. 📅", "bot");
         escolherDataAgendamento();
         return;
     }
 
     criarMensagemComOpcoes(
         "Estes são os horários disponíveis para " +
-            formatarData(agendamentoEmAndamento.data) + ":",
+        formatarData(agendamentoEmAndamento.data) + ":",
         horariosLivres.map(function (horario) {
             return { rotulo: horario, valor: horario };
         }),
@@ -379,9 +398,9 @@ function confirmarAgendamento() {
 
     criarMensagemComOpcoes(
         "Confirme seu pedido:\n" +
-            "Serviço: " + agendamentoEmAndamento.servico + "\n" +
-            "Dia: " + formatarData(agendamentoEmAndamento.data) + "\n" +
-            "Horário: " + agendamentoEmAndamento.horario,
+        "Serviço: " + agendamentoEmAndamento.servico + "\n" +
+        "Dia: " + formatarData(agendamentoEmAndamento.data) + "\n" +
+        "Horário: " + agendamentoEmAndamento.horario,
         [
             { rotulo: "Confirmar agendamento", valor: "confirmar" },
             { rotulo: "Cancelar", valor: "cancelar" }
@@ -389,10 +408,7 @@ function confirmarAgendamento() {
         function (acao) {
             if (acao === "cancelar") {
                 agendamentoEmAndamento = null;
-                adicionarMensagem(
-                    "Tudo bem! O pedido de agendamento foi cancelado.",
-                    "bot"
-                );
+                adicionarMensagem("Tudo bem! O pedido de agendamento foi cancelado.", "bot");
                 return;
             }
 
@@ -404,10 +420,7 @@ function confirmarAgendamento() {
             });
 
             if (ocupado) {
-                adicionarMensagem(
-                    "Esse horário acabou de ficar indisponível. Escolha outro, por favor.",
-                    "bot"
-                );
+                adicionarMensagem("Esse horário acabou de ficar indisponível. Escolha outro, por favor.", "bot");
                 escolherHorarioAgendamento();
                 return;
             }
@@ -438,10 +451,7 @@ function mostrarAgendamentos() {
     const agendamentos = lerAgendamentos();
 
     if (agendamentos.length === 0) {
-        adicionarMensagem(
-            "Ainda não há agendamentos registrados neste navegador.",
-            "bot"
-        );
+        adicionarMensagem("Ainda não há agendamentos registrados neste navegador.", "bot");
         return;
     }
 
@@ -459,49 +469,445 @@ function mostrarAgendamentos() {
     adicionarMensagem("Seus agendamentos registrados:\n" + texto, "bot");
 }
 
-function enviarPergunta(texto) {
-    if (!texto.trim()) return;
+function consultarDisponibilidade(textoOriginal) {
+    const texto = textoOriginal.toLowerCase();
 
-    adicionarMensagem(texto, "usuario");
+    const dataEncontrada = texto.match(
+        /(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/
+    );
 
-    const pergunta = normalizar(texto);
+    if (!dataEncontrada) return false;
 
-    if (estabelecimentoAtual === "salao") {
-        if (/\b(meus agendamentos|ver agendamentos|consultar agendamentos|listar agendamentos)\b/.test(pergunta)) {
-            mostrarAgendamentos();
-            return;
-        }
+    const dia = Number(dataEncontrada[1]);
+    const mes = Number(dataEncontrada[2]);
+    const ano = Number(dataEncontrada[3]);
+    const data = new Date(ano, mes - 1, dia);
 
-        if (/\b(agendar|agendamento|marcar horario|reservar horario)\b/.test(pergunta)) {
-            iniciarAgendamento();
-            return;
-        }
+    if (
+        data.getFullYear() !== ano ||
+        data.getMonth() !== mes - 1 ||
+        data.getDate() !== dia
+    ) {
+        adicionarMensagem("Essa data não é válida. Confira e tente novamente.", "bot");
+        return true;
     }
 
-    if (estabelecimentoAtual === "loja" && aguardandoProduto) {
-        responderPrecoProduto(texto);
-        aguardandoProduto = false;
+    const textoDepoisDaData = texto.slice(
+        dataEncontrada.index + dataEncontrada[0].length
+    );
+
+    const horarioEncontrado = textoDepoisDaData.match(
+        /(?:às?|as)?\s*(\d{1,2})(?::(\d{2}))?\s*(?:h(?:oras?)?|hrs?)?/i
+    );
+
+    if (!horarioEncontrado) {
+        adicionarMensagem(
+            `Para ${formatarData(dataISO(data))}, informe também o horário. Exemplo: "Tem horário para ${dia}/${String(mes).padStart(2, "0")}/${ano} às 11h?"`,
+            "bot"
+        );
+        return true;
+    }
+
+    const hora = Number(horarioEncontrado[1]);
+    const minutos = Number(horarioEncontrado[2] || 0);
+    const horario = `${String(hora).padStart(2, "0")}:${String(minutos).padStart(2, "0")}`;
+
+    const dataAgendamento = dataISO(data);
+    const agendamentos = lerAgendamentos();
+
+    if (data < new Date(new Date().setHours(0, 0, 0, 0))) {
+        adicionarMensagem("Essa data já passou. Escolha uma data futura, por favor.", "bot");
+        return true;
+    }
+
+    if (![2, 3, 4, 5, 6].includes(data.getDay())) {
+        adicionarMensagem("Atendemos de terça a sábado. Escolha uma data entre esses dias.", "bot");
+        return true;
+    }
+
+    if (!HORARIOS_AGENDAMENTO.includes(horario)) {
+        adicionarMensagem(
+            "Esse horário não faz parte dos nossos horários de atendimento. Temos opções das 9h às 17h, com pausa às 12h.",
+            "bot"
+        );
+        return true;
+    }
+
+    const ocupado = agendamentos.some(function (agendamento) {
+        return agendamento.data === dataAgendamento &&
+            agendamento.horario === horario;
+    });
+
+    if (ocupado) {
+        const livres = HORARIOS_AGENDAMENTO.filter(function (h) {
+            return !agendamentos.some(function (agendamento) {
+                return agendamento.data === dataAgendamento &&
+                    agendamento.horario === h;
+            });
+        });
+
+        adicionarMensagem(
+            livres.length
+                ? `Às ${horario}, esse horário já está ocupado. Para ${formatarData(dataAgendamento)}, ainda temos: ${livres.join(", ")}. Digite "agendar" para reservar.`
+                : `Não temos mais horários disponíveis para ${formatarData(dataAgendamento)}. Digite "agendar" para escolher outra data.`,
+            "bot"
+        );
+    } else {
+        adicionarMensagem(
+            `Sim! Temos disponibilidade em ${formatarData(dataAgendamento)} às ${horario}. Digite "agendar" para fazer sua reserva.`,
+            "bot"
+        );
+    }
+
+    return true;
+}
+
+function dataISO(data) {
+    return [
+        data.getFullYear(),
+        String(data.getMonth() + 1).padStart(2, "0"),
+        String(data.getDate()).padStart(2, "0")
+    ].join("-");
+}
+function iniciarPagamento(metodo) {
+    if (metodo === "pix") {
+        pagamentoEmAndamento = "pix";
+
+        const chavePix = "00000000-0000-4000-8000-000000000000";
+
+        adicionarMensagem(
+            "💠 Pagamento via Pix\n\n" +
+            "Para concluir seu pagamento demonstrativo, utilize a chave Pix abaixo:\n\n" +
+            "Chave Pix: " + chavePix + "\n\n" +
+            "Depois de simular o envio do pagamento, digite: comprovante enviado\n\n" +
+            "⚠️ Esta é uma simulação. Nenhum pagamento real será realizado.",
+            "bot"
+        );
+
         return;
     }
 
-    if (
-        estabelecimentoAtual === "loja" &&
-        /\b(preco|precos|valor|valores|quanto custa|quanto e)\b/.test(pergunta)
-    ) {
-        aguardandoProduto = true;
+    if (metodo === "cartao") {
+        pagamentoEmAndamento = null;
+
+        if (compraEmAndamento) {
+            concluirCompraLoja();
+            return;
+        }
 
         adicionarMensagem(
-            "Claro! 😊 Qual produto você deseja consultar? Temos mouse, teclado, headset, memória RAM, SSD e webcam.",
+            "💳 O pagamento com cartão será realizado no dia do atendimento. Aguardamos você no horário agendado!",
+            "bot"
+        );
+
+        return;
+    }
+
+    pagamentoEmAndamento = null;
+
+    adicionarMensagem(
+        "💵 O pagamento em dinheiro poderá ser entregue no dia do atendimento. Agradecemos pelo contato!",
+        "bot"
+    );
+}
+
+function mostrarFormasPagamento() {
+    criarMensagemComOpcoes(
+        "Como deseja realizar o pagamento?",
+        [
+            { rotulo: "Pix", valor: "pix" },
+            { rotulo: "Cartão", valor: "cartao" },
+            { rotulo: "Dinheiro", valor: "dinheiro" }
+        ],
+        function (metodo) {
+            iniciarPagamento(metodo);
+        }
+    );
+}
+function adicionarAoCarrinho(texto) {
+    const pergunta = normalizar(texto);
+
+    const produtosEncontrados = catalogoLoja.filter(function (produto) {
+        return produto.palavras.some(function (palavra) {
+            return pergunta.includes(normalizar(palavra));
+        });
+    });
+
+    if (produtosEncontrados.length === 0) {
+        adicionarMensagem(
+            "Não encontrei esse produto. Temos mouse, teclado, headset, memória RAM, SSD e webcam.",
             "bot"
         );
         return;
     }
 
-    adicionarMensagem(responder(texto), "bot");
+    produtosEncontrados.forEach(function (produto) {
+        const existente = carrinho.find(function (item) {
+            return item.nome === produto.nome;
+        });
+
+        if (existente) {
+            existente.quantidade++;
+        } else {
+            carrinho.push({
+                nome: produto.nome,
+                preco: produto.preco,
+                quantidade: 1
+            });
+        }
+    });
+
+    adicionarMensagem("Produto(s) adicionado(s) ao carrinho! 🛒", "bot");
+    mostrarCarrinho();
 }
 
-function perguntar(texto) {
-    enviarPergunta(texto);
+function mostrarCarrinho() {
+    if (carrinho.length === 0) {
+        adicionarMensagem("Seu carrinho está vazio. 🛒", "bot");
+        return;
+    }
+
+    const total = carrinho.reduce(function (soma, item) {
+        return soma + item.preco * item.quantidade;
+    }, 0);
+
+    const resumo = carrinho.map(function (item) {
+        return item.quantidade + "x " + item.nome +
+            " — " + (item.preco * item.quantidade).toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL"
+            });
+    }).join("\n");
+
+    adicionarMensagem(
+        "🛒 SEU CARRINHO\n\n" + resumo +
+        "\n\nTotal: " + total.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL"
+        }),
+        "bot"
+    );
+
+    const opcoes = carrinho.map(function (item) {
+        return {
+            rotulo: "Remover " + item.nome,
+            valor: "remover:" + item.nome
+        };
+    });
+
+    opcoes.push(
+        { rotulo: "Finalizar compra", valor: "finalizar" },
+        { rotulo: "Cancelar compra", valor: "cancelar" }
+    );
+
+    criarMensagemComOpcoes(
+        "O que deseja fazer agora?",
+        opcoes,
+        function (acao) {
+            if (acao === "finalizar") {
+                finalizarCompra();
+                return;
+            }
+
+            if (acao === "cancelar") {
+                carrinho = [];
+                adicionarMensagem("Compra cancelada. Seu carrinho foi esvaziado. ❌", "bot");
+                return;
+            }
+
+            if (acao.startsWith("remover:")) {
+                const nome = acao.replace("remover:", "");
+                carrinho = carrinho.filter(function (item) {
+                    return item.nome !== nome;
+                });
+
+                adicionarMensagem(nome + " removido do carrinho.", "bot");
+                mostrarCarrinho();
+            }
+        }
+    );
+}
+
+function finalizarCompra() {
+    if (carrinho.length === 0) {
+        adicionarMensagem("Seu carrinho está vazio!", "bot");
+        return;
+    }
+
+    const total = carrinho.reduce(function (soma, item) {
+        return soma + item.preco * item.quantidade;
+    }, 0);
+
+    resumoCompra = carrinho.map(function (item) {
+        return item.quantidade + "x " + item.nome;
+    }).join(", ");
+
+    resumoCompra += " — Total: " + total.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+    });
+
+    compraEmAndamento = true;
+
+    adicionarMensagem(
+        "Sua compra: " + resumoCompra + "\n\nEscolha uma forma de pagamento:",
+        "bot"
+    );
+
+    mostrarFormasPagamento();
+}
+
+function concluirCompraLoja() {
+    adicionarMensagem(
+        "✅ Compra registrada nesta demonstração!\n\n" +
+        resumoCompra +
+        "\n\n⚠️ Nenhum pagamento real foi realizado.",
+        "bot"
+    );
+
+    carrinho = [];
+    compraEmAndamento = false;
+    resumoCompra = "";
+}
+function enviarPergunta(texto) {
+    adicionarMensagem(texto, "usuario");
+
+    const pergunta = normalizar(texto);
+    // Simulação de envio e aprovação do comprovante Pix
+    if (pagamentoEmAndamento === "pix") {
+
+        if (
+            pergunta.includes("cancelar") ||
+            pergunta.includes("desistir")
+        ) {
+            pagamentoEmAndamento = null;
+
+            adicionarMensagem(
+                "❌ Pagamento Pix cancelado! Se desejar, você poderá escolher outra forma de pagamento.",
+                "bot"
+            );
+
+            mostrarFormasPagamento();
+            if (compraEmAndamento) {
+                concluirCompraLoja();
+            }
+            return;
+        }
+
+        if (
+            pergunta.includes("comprovante") ||
+            pergunta.includes("enviei") ||
+            pergunta.includes("paguei")
+        ) {
+            pagamentoEmAndamento = null;
+
+            adicionarMensagem(
+                "✅ Comprovante recebido! Pagamento aprovado na nossa demonstração. Obrigado!",
+                "bot"
+            );
+
+            return;
+        }
+
+        adicionarMensagem(
+            "Aguardamos o comprovante para continuar. Se mudou de ideia, digite CANCELAR.",
+            "bot"
+        );
+
+        return;
+    }
+
+    // Mostrar opções quando o cliente perguntar sobre pagamento
+    if (
+        pergunta.includes("pagamento") ||
+        pergunta.includes("formas de pagar") ||
+        pergunta.includes("como pagar")
+    ) {
+        mostrarFormasPagamento();
+        return;
+    }
+
+    // Se o cliente escolher Pix ou cartão diretamente
+    if (pergunta === "pix") {
+        iniciarPagamento("pix");
+        return;
+    }
+
+    if (pergunta.includes("cartao")) {
+        iniciarPagamento("cartao");
+        return;
+    }
+
+    if (pergunta === "dinheiro") {
+        iniciarPagamento("dinheiro");
+        return;
+    }
+
+    if (estabelecimentoAtual === "salao") {
+        if (
+            pergunta.includes("meus agendamentos") ||
+            pergunta.includes("ver agendamentos") ||
+            pergunta.includes("minhas reservas")
+        ) {
+            mostrarAgendamentos();
+            return;
+        }
+
+        if (consultarDisponibilidade(texto)) return;
+
+        if (
+            pergunta.includes("agendar") ||
+            pergunta.includes("marcar horario") ||
+            pergunta.includes("marcar um horario") ||
+            pergunta.includes("quero marcar")
+        ) {
+            iniciarAgendamento();
+            return;
+        }
+    }
+
+    if (estabelecimentoAtual === "loja" && /\b(preco|precos|valor|quanto custa)\b/.test(pergunta)) {
+        aguardandoProduto = true;
+        adicionarMensagem("Qual produto você deseja consultar? Temos mouse, teclado, headset, memória RAM, SSD e webcam.", "bot");
+        return;
+    }
+
+    if (aguardandoProduto) {
+        aguardandoProduto = false;
+        responderPrecoProduto(texto);
+        return;
+    }
+    if (estabelecimentoAtual === "loja") {
+        if (
+            pergunta.includes("ver carrinho") ||
+            pergunta.includes("mostrar carrinho") ||
+            pergunta === "carrinho"
+        ) {
+            mostrarCarrinho();
+            return;
+        }
+
+        if (
+            pergunta.includes("cancelar compra") ||
+            pergunta.includes("desistir da compra")
+        ) {
+            carrinho = [];
+            compraEmAndamento = false;
+            pagamentoEmAndamento = null;
+            adicionarMensagem("Compra cancelada! Seu carrinho foi esvaziado. ❌", "bot");
+            return;
+        }
+
+        if (
+            pergunta.includes("comprar") ||
+            pergunta.includes("adicionar ao carrinho") ||
+            pergunta.includes("colocar no carrinho")
+        ) {
+            adicionarAoCarrinho(texto);
+            return;
+        }
+    }
+    adicionarMensagem(responder(texto), "bot");
 }
 
 document.getElementById("formulario").addEventListener("submit", function (evento) {
@@ -524,5 +930,25 @@ function trocarEstabelecimento() {
 
     document.getElementById("chat").hidden = true;
     document.getElementById("escolha").hidden = false;
-    document.getElementById("mensagens").innerHTML = "";
+}
+function perguntar(texto) {
+    const campoMensagem = document.getElementById("mensagem");
+    campoMensagem.value = texto;
+
+    document.getElementById("formulario").requestSubmit();
+}
+function mostrarPagamentoPix() {
+    const chavePix = "00000000-0000-4000-8000-000000000000";
+
+    criarMensagemBot(`
+        <strong>💠 Pagamento via Pix</strong><br><br>
+        Para simular seu pagamento, utilize a chave Pix abaixo:<br><br>
+        <strong>Chave Pix:</strong><br>
+        <code>${chavePix}</code><br><br>
+        Após copiar a chave, imagine que realizou o pagamento e aguarde a confirmação.<br><br>
+        <em>⚠️ Esta é uma simulação. Nenhum pagamento real será realizado.</em><br><br>
+        <button type="button" onclick="copiarPix('${chavePix}')">
+            📋 Copiar chave Pix
+        </button>
+    `);
 }
